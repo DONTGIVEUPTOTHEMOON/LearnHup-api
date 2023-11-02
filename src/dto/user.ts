@@ -2,10 +2,10 @@ export interface IUserDto {
   id: string;
   username: string;
   name: string;
-  registeredAt: string;
+  registerAt: string;
 }
 
-export interface reateUserDto {
+export interface ICreateUserDto {
   name: string;
   username: string;
   password: string;
