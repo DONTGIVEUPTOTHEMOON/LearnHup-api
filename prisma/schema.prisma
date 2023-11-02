@@ -13,9 +13,9 @@ datasource db {
 model User {
   id         String    @id @default(uuid()) @db.Uuid
   name       String
-  username   String
+  username   String    @unique
   password   String
-  registerAt DateTime
+  registerAt DateTime  @default(now())
   Content    Content[]
 }
 
