@@ -2,10 +2,14 @@ import { RequestHandler } from "express";
 import { JsonWebTokenError, JwtPayload, verify } from "jsonwebtoken";
 import { JWT_SECRET } from "../const";
 
-export default class JWTMiddleware {
-  construction() {}
+export interface AuthStatus {
+  user: { id: string };
+}
 
-  auth: RequestHandler<unknown, unknown, unknown, unknown, {}> = (
+export default class JWTMiddleware {
+  constructor() {}
+
+  auth: RequestHandler<unknown, unknown, unknown, unknown, AuthStatus> = (
     req,
     res,
     next

@@ -2,12 +2,13 @@ import { RequestHandler } from "express";
 import { IUserHandler } from ".";
 import { IErrorDto } from "../dto/error";
 import { ICreateUserDto, IUserDto } from "../dto/user";
-import { IUserRepository, UserCreationError } from "../repositories";
+import { IUserRepository } from "../repositories";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ICredentialDto, ILoginDto } from "../dto/auth";
 import { sign } from "jsonwebtoken";
 import { JWT_SECRET } from "../const";
+import { AuthStatus } from "../middleware/jwt";
 
 export default class UserHandler implements IUserHandler {
   private repo: IUserRepository;
@@ -15,6 +16,32 @@ export default class UserHandler implements IUserHandler {
   constructor(repo: IUserRepository) {
     this.repo = repo;
   }
+  public selfcheck: RequestHandler<
+    {},
+    IUserDto | IErrorDto,
+    unknown,
+    unknown,
+    AuthStatus
+  > = async (req, res) => {
+    try {
+      const { registerAt, ...other } = await this.repo.findById(
+        res.locals.user.id
+      );
+      return res
+        .status(200)
+        .json({
+          ...other,
+          registerAt: registerAt.toISOString()
+        })
+        .end();
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).send({
+        message: "Interal Server Error"
+      });
+    }
+  };
 
   public login: RequestHandler<{}, ICredentialDto | IErrorDto, ILoginDto> =
     async (req, res) => {
