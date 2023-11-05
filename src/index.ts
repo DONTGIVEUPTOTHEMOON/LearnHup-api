@@ -1,40 +1,48 @@
-import { PrismaClient } from "@prisma/client";
 import express from "express";
-import { IUserHandler } from "./handlers";
-import UserHandler from "./handlers/user";
-import { IUserRepository } from "./repositories";
+import { PrismaClient } from "@prisma/client";
+import { IContentRepository, IUserRepository } from "./repositories";
 import UserRepository from "./repositories/user";
+import { IContentHandler, IUserHandler } from "./handlers";
+import UserHandler from "./handlers/user";
 import JWTMiddleware from "./middleware/jwt";
+import ContentRepository from "./repositories/content";
+import ContentHandler from "./handlers/content";
 
-const PORT = Number(process.env.PORT || 8888);
 const app = express();
-const clnt = new PrismaClient();
+const PORT = Number(process.env.PORT || 8800);
 
+const client = new PrismaClient();
+// User
+const userRepo: IUserRepository = new UserRepository(client);
+const userHandler: IUserHandler = new UserHandler(userRepo);
+// Content
+const contentRepo: IContentRepository = new ContentRepository(client);
+const contentHandler: IContentHandler = new ContentHandler(contentRepo);
 const jwtMiddleware = new JWTMiddleware();
 
-const userRepo: IUserRepository = new UserRepository(clnt);
-
-const userHandler: IUserHandler = new UserHandler(userRepo);
-
 app.use(express.json());
+const userRouter = express.Router();
+const authRouter = express.Router();
+const contentRouter = express.Router();
 
-app.get("/", jwtMiddleware.auth, (req, res) => {
-  console.log(res.locals);
-  return res.status(200).send("Welcome to LearnHub").end();
+app.get("/", (req, res) => {
+  return res.status(200).send("Hello world").end();
 });
 
-const userRouter = express.Router();
-
 app.use("/user", userRouter);
-
 userRouter.post("/", userHandler.registration);
 
-const authRouter = express.Router();
 app.use("/auth", authRouter);
-
 authRouter.post("/login", userHandler.login);
-authRouter.post("/me", jwtMiddleware.auth, userHandler.selfcheck);
+authRouter.get("/me", jwtMiddleware.auth, userHandler.selfcheck);
+
+app.use("/content", contentRouter);
+contentRouter.post("/", jwtMiddleware.auth, contentHandler.createContent);
+contentRouter.get("/", contentHandler.getAllContent);
+contentRouter.get("/:id", contentHandler.getContentById);
+contentRouter.patch("/:id", jwtMiddleware.auth, contentHandler.updateContent);
+contentRouter.delete("/:id", jwtMiddleware.auth, contentHandler.deleteContent);
 
 app.listen(PORT, () => {
-  console.log(`LearnHub API is up at ${PORT}`);
+  console.log(`server is listening on port ${PORT}`);
 });

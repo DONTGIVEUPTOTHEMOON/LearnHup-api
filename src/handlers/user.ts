@@ -1,116 +1,120 @@
-import { RequestHandler } from "express";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { IUserHandler } from ".";
-import { IErrorDto } from "../dto/error";
-import { ICreateUserDto, IUserDto } from "../dto/user";
+import { IUserDTO, toUserDTO } from "../dto/user";
 import { IUserRepository } from "../repositories";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { ICredentialDto, ILoginDto } from "../dto/auth";
 import { sign } from "jsonwebtoken";
 import { JWT_SECRET } from "../const";
-import { AuthStatus } from "../middleware/jwt";
 
 export default class UserHandler implements IUserHandler {
   private repo: IUserRepository;
-
   constructor(repo: IUserRepository) {
     this.repo = repo;
   }
-  public selfcheck: RequestHandler<
-    {},
-    IUserDto | IErrorDto,
-    unknown,
-    unknown,
-    AuthStatus
-  > = async (req, res) => {
-    try {
-      const { registerAt, ...other } = await this.repo.findById(
-        res.locals.user.id
-      );
-      return res
-        .status(200)
-        .json({
-          ...other,
-          registerAt: registerAt.toISOString()
-        })
-        .end();
-    } catch (error) {
-      console.error(error);
 
-      return res.status(500).send({
-        message: "Interal Server Error"
-      });
-    }
-  };
-
-  public login: RequestHandler<{}, ICredentialDto | IErrorDto, ILoginDto> =
-    async (req, res) => {
-      const { username, password: plainPassword } = req.body;
-      try {
-        const { id, password } = await this.repo.findByUsername(username);
-        if (!verifyPassword(plainPassword, password))
-          throw new Error("Invalid username or password");
-
-        const accessToken = sign({ id: id }, JWT_SECRET, {
-          algorithm: "HS512",
-          expiresIn: "12h",
-          issuer: "learnhub-api",
-          subject: "user-credential"
-        });
-
-        return res.status(200).json({ accessToken }).end();
-      } catch (error) {
-        return res.status(401).json({ message: "Logged In" }).end();
-      }
-    };
-
-  public registration: RequestHandler<
-    {},
-    IUserDto | IErrorDto,
-    ICreateUserDto
-  > = async (req, res) => {
+  registration: IUserHandler["registration"] = async (req, res) => {
     const { name, username, password: plainPassword } = req.body;
+    if (typeof name !== "string") {
+      return res.status(400).json({ message: "name is not a string" }).end();
+    }
+    if (name.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "name cannot be empty string" })
+        .end();
+    }
 
-    if (typeof name !== "string" || name.length === 0)
-      return res.status(400).json({ message: "name is invalid" });
-    if (typeof username !== "string" || username.length === 0)
-      return res.status(400).json({ message: "username is invalid" });
-    if (typeof plainPassword !== "string" || plainPassword.length < 5)
-      return res.status(400).json({ message: "password is invalid" });
+    if (typeof username !== "string") {
+      return res
+        .status(400)
+        .json({ message: "username is not a string" })
+        .end();
+    }
+    if (username.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "username cannot be empty string" })
+        .end();
+    }
 
+    if (typeof plainPassword !== "string") {
+      return res
+        .status(400)
+        .json({ message: "password is not a string" })
+        .end();
+    }
+    if (plainPassword.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "password cannot be empty string" })
+        .end();
+    }
     try {
-      const {
-        id: registeredId,
-        name: registeredName,
-        registerAt,
-        username: registeredUsername
-      } = await this.repo.create({
+      const result = await this.repo.createUser({
         name,
         username,
         password: hashPassword(plainPassword)
       });
 
-      return res
-        .status(201)
-        .json({
-          id: registeredId,
-          name: registeredName,
-          registerAt: `${registerAt}`,
-          username: registeredUsername
-        })
-        .end();
+      const userResponse: IUserDTO = toUserDTO(result);
+
+      return res.status(201).json(userResponse).end();
     } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        return res.status(500).json({
-          message: `name is invalid`
-        });
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === "P2002") {
+          return res
+            .status(400)
+            .json({ message: "username is already used" })
+            .end();
+        }
       }
-      return res.status(500).json({
-        message: `Internal Server Error`
+
+      return res.status(500).json({ message: "internal server error" }).end();
+    }
+  };
+
+  login: IUserHandler["login"] = async (req, res) => {
+    const { username, password: plainPassword } = req.body;
+    try {
+      const { id, password } = await this.repo.findByUsername(username);
+      if (!verifyPassword(plainPassword, password)) {
+        throw new Error("invalid username or password");
+      }
+      const accessToken = sign({ id }, JWT_SECRET, {
+        algorithm: "HS512",
+        expiresIn: "12h",
+        issuer: "learnhub-api",
+        subject: "user-credential"
       });
+
+      return res.status(200).json({ accessToken: accessToken }).end();
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === "P2025") {
+          return res
+            .status(400)
+            .json({ message: "invalid username or password" })
+            .end();
+        }
+      }
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message }).end();
+      }
+      return res.status(500).json({ message: "internal server error" }).end();
+    }
+  };
+
+  selfcheck: IUserHandler["selfcheck"] = async (req, res) => {
+    try {
+      const id = res.locals.user.id;
+
+      const result = await this.repo.findById(id);
+
+      const userResponse: IUserDTO = toUserDTO(result);
+      return res.status(201).json(userResponse).end();
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "internal server error" });
     }
   };
 }
