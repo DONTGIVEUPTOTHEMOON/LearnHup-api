@@ -1,8 +1,8 @@
-export interface ILoginDto {
+export interface ILoginDTO {
   username: string;
   password: string;
 }
 
-export interface ICredentialDto {
+export interface ICredentialDTO {
   accessToken: string;
 }
