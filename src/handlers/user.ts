@@ -6,7 +6,7 @@ import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { sign } from "jsonwebtoken";
 import { JWT_SECRET } from "../const";
 
-export default class UserHandler implements IUserHandler {
+export default class userHandler implements IUserHandler {
   private repo: IUserRepository;
   constructor(repo: IUserRepository) {
     this.repo = repo;
@@ -60,13 +60,14 @@ export default class UserHandler implements IUserHandler {
 
       return res.status(201).json(userResponse).end();
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
-          return res
-            .status(400)
-            .json({ message: "username is already used" })
-            .end();
-        }
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return res
+          .status(400)
+          .json({ message: "username is already used" })
+          .end();
       }
 
       return res.status(500).json({ message: "internal server error" }).end();
@@ -89,13 +90,14 @@ export default class UserHandler implements IUserHandler {
 
       return res.status(200).json({ accessToken: accessToken }).end();
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === "P2025") {
-          return res
-            .status(400)
-            .json({ message: "invalid username or password" })
-            .end();
-        }
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return res
+          .status(400)
+          .json({ message: "invalid username or password" })
+          .end();
       }
       if (error instanceof Error) {
         return res.status(400).json({ message: error.message }).end();
@@ -104,7 +106,7 @@ export default class UserHandler implements IUserHandler {
     }
   };
 
-  selfcheck: IUserHandler["selfcheck"] = async (req, res) => {
+  getPeosonalInfo: IUserHandler["getPeosonalInfo"] = async (req, res) => {
     try {
       const id = res.locals.user.id;
 
@@ -114,7 +116,30 @@ export default class UserHandler implements IUserHandler {
       return res.status(201).json(userResponse).end();
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "internal server error" });
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return res.status(404).json({ message: "user not found" }).end();
+      }
+      return res.status(500).json({ message: "internal server error" }).end();
+    }
+  };
+
+  getUserByUsername: IUserHandler["getUserByUsername"] = async (req, res) => {
+    try {
+      const result = await this.repo.findByUsername(req.params.username);
+      const userResponse = toUserDTO(result);
+      return res.status(200).json(userResponse).end();
+    } catch (error) {
+      console.error(error);
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return res.status(404).json({ message: "user not found" }).end();
+      }
+      return res.status(500).json({ message: "internal server error" }).end();
     }
   };
 }
