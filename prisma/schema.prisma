@@ -11,12 +11,13 @@ datasource db {
 }
 
 model User {
-  id         String    @id @default(uuid()) @db.Uuid
+  id         String      @id @default(uuid()) @db.Uuid
   name       String
-  username   String    @unique
+  username   String      @unique
   password   String
-  registerAt DateTime  @default(now())
+  registerAt DateTime    @default(now())
   Content    Content[]
+  Blacklist  Blacklist[]
 }
 
 model Content {
@@ -32,4 +33,14 @@ model Content {
   updatedAt   DateTime @default(now())
   User        User     @relation(fields: [ownerId], references: [id])
   ownerId     String   @db.Uuid
+}
+
+model Blacklist {
+  id        String   @id @default(uuid()) @db.Uuid // Unique session identifier, can be a UUID or any other unique string
+  ownerId   String   @db.Uuid
+  token     String   @unique // Unique token associated with this session, used for authentication
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime // Timestamp indicating when the session/token expires
+  User      User     @relation(fields: [ownerId], references: [id])
 }

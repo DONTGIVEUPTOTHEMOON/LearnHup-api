@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { ICreateUserDTO, IUserDTO, IdParam, usernameParam } from "../dto/user";
 import { IErrorDTO } from "../dto/error";
-import { ICredentialDTO, ILoginDTO } from "../dto/auth";
+import { ICredentialDTO, ILoginDTO, ILogoutDTO } from "../dto/auth";
 import { AuthStatus } from "../middleware/jwt";
 import {
   IContentDTO,
@@ -12,8 +12,13 @@ import {
 
 export interface IEmpty {}
 export interface IUserHandler {
+  //registration
   registration: RequestHandler<IEmpty, IUserDTO | IErrorDTO, ICreateUserDTO>;
+  //login
   login: RequestHandler<IEmpty, ICredentialDTO | IErrorDTO, ILoginDTO>;
+  //logout
+  logout: RequestHandler<IEmpty, IErrorDTO, ILogoutDTO>;
+  //info
   getPeosonalInfo: RequestHandler<
     IEmpty,
     IUserDTO | IErrorDTO,

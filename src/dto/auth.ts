@@ -6,3 +6,8 @@ export interface ILoginDTO {
 export interface ICredentialDTO {
   accessToken: string;
 }
+
+export interface ILogoutDTO {
+  username: string;
+  password: string;
+}
