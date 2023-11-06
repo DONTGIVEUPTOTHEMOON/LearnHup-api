@@ -60,7 +60,7 @@ export default class ContentHandler implements IContentHandler {
       const contentsResponse = result.map((content) => {
         return toContentDTO(content);
       });
-      return res.status(200).json(contentsResponse).end();
+      return res.status(200).json({ data: contentsResponse }).end();
     } catch (error) {
       console.error(error);
 
@@ -71,12 +71,17 @@ export default class ContentHandler implements IContentHandler {
   getContentById: IContentHandler["getContentById"] = async (req, res) => {
     try {
       const id = Number(req.params.id);
+      if (isNaN(id)) {
+        throw new Error("id is invalid");
+      }
       const result = await this.repo.getContentById(id);
       const contentResponse = toContentDTO(result);
       return res.status(200).json(contentResponse).end();
     } catch (error) {
       console.error(error);
-
+      if (error instanceof Error) {
+        return res.status(400).json({ message: error.message }).end();
+      }
       return res.status(500).json({ message: "internal server error" }).end();
     }
   };
@@ -85,6 +90,9 @@ export default class ContentHandler implements IContentHandler {
     try {
       const userId = res.locals.user.id;
       const contentId = Number(req.params.id);
+      if (isNaN(contentId)) {
+        throw new Error("id is invalid");
+      }
       const { comment, rating } = req.body;
       if (comment === undefined || typeof comment !== "string") {
         throw new Error("invalid comment");
@@ -97,18 +105,22 @@ export default class ContentHandler implements IContentHandler {
       ) {
         throw new Error("invalid rating");
       }
+      const { User } = await this.repo.getContentById(contentId);
+      if (userId !== User.id) {
+        throw new Error("cannot update content");
+      }
       const result = await this.repo.updateContent(contentId, {
         comment,
         rating
       });
-      if (userId !== result.User.id) {
-        throw new Error("cannot update content");
-      }
       const contentResponse = toContentDTO(result);
       return res.status(200).json(contentResponse).end();
     } catch (error) {
       console.error(error);
-      if (error instanceof PrismaClientKnownRequestError) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
         return res
           .status(400)
           .json({ message: "content does not exist" })
@@ -126,15 +138,22 @@ export default class ContentHandler implements IContentHandler {
     try {
       const userId = res.locals.user.id;
       const contentId = Number(req.params.id);
-      const result = await this.repo.deleteContent(contentId);
-      if (userId !== result.User.id) {
+      if (isNaN(contentId)) {
+        throw new Error("id is invalid");
+      }
+      const { User } = await this.repo.getContentById(contentId);
+      if (userId !== User.id) {
         throw new Error("cannot delete content");
       }
+      const result = await this.repo.deleteContent(contentId);
       const contentResponse = toContentDTO(result);
       return res.status(200).json(contentResponse).end();
     } catch (error) {
       console.error(error);
-      if (error instanceof PrismaClientKnownRequestError) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
         return res
           .status(400)
           .json({ message: "content does not exist" })
