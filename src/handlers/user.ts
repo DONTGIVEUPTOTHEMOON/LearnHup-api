@@ -74,6 +74,7 @@ export default class userHandler implements IUserHandler {
     }
   };
 
+  //login
   login: IUserHandler["login"] = async (req, res) => {
     const { username, password: plainPassword } = req.body;
     try {
@@ -104,6 +105,20 @@ export default class userHandler implements IUserHandler {
       }
       return res.status(500).json({ message: "internal server error" }).end();
     }
+  };
+
+  //logout
+  logout: IUserHandler["logout"] = async (req, res) => {
+    const tokenToInvalidate = req.headers.authorization?.split(" ")[1];
+    // Check if the token exists
+    if (!tokenToInvalidate) {
+      return res.status(401).json({ message: "Unauthorized" }).end();
+    }
+
+    // TODO: Add the logic to invalidate the token (e.g., adding it to a blacklist)
+    // For example, you can store the invalidated tokens in a database or cache.
+
+    return res.status(200).json({ message: "Logged out successfully" }).end();
   };
 
   getPeosonalInfo: IUserHandler["getPeosonalInfo"] = async (req, res) => {

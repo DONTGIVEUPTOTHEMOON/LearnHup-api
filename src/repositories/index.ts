@@ -48,6 +48,7 @@ export interface IContentRepository {
   ): Promise<IContent>;
   deleteContent(id: number): Promise<IContent>;
 }
+
 //User
 
 // export interface IUserExtended
