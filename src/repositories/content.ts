@@ -22,7 +22,7 @@ export default class ContentRepository implements IContentRepository {
             id: true,
             name: true,
             username: true,
-            registerAt: true
+            registeredAt: true
           }
         }
       }
@@ -37,7 +37,7 @@ export default class ContentRepository implements IContentRepository {
             id: true,
             name: true,
             username: true,
-            registerAt: true
+            registeredAt: true
           }
         }
       }
@@ -53,7 +53,7 @@ export default class ContentRepository implements IContentRepository {
             id: true,
             name: true,
             username: true,
-            registerAt: true
+            registeredAt: true
           }
         }
       }
@@ -74,7 +74,7 @@ export default class ContentRepository implements IContentRepository {
             id: true,
             name: true,
             username: true,
-            registerAt: true
+            registeredAt: true
           }
         }
       }
@@ -90,7 +90,7 @@ export default class ContentRepository implements IContentRepository {
             id: true,
             name: true,
             username: true,
-            registerAt: true
+            registeredAt: true
           }
         }
       }

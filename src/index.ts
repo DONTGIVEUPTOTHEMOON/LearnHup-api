@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 import { IContentRepository, IUserRepository } from "./repositories";
 import UserRepository from "./repositories/user";
@@ -18,8 +19,9 @@ const userHandler: IUserHandler = new UserHandler(userRepo);
 // Content
 const contentRepo: IContentRepository = new ContentRepository(client);
 const contentHandler: IContentHandler = new ContentHandler(contentRepo);
-const jwtMiddleware = new JWTMiddleware();
+const jwtMiddleware = new JWTMiddleware(userRepo);
 
+app.use(cors());
 app.use(express.json());
 const userRouter = express.Router();
 const authRouter = express.Router();
@@ -35,7 +37,8 @@ userRouter.post("/", userHandler.registration);
 
 app.use("/auth", authRouter);
 authRouter.post("/login", userHandler.login);
-authRouter.get("/me", jwtMiddleware.auth, userHandler.getPeosonalInfo);
+authRouter.post("/logout", jwtMiddleware.auth, userHandler.logout);
+authRouter.get("/me", jwtMiddleware.auth, userHandler.getPersonalInfo);
 
 app.use("/content", contentRouter);
 contentRouter.post("/", jwtMiddleware.auth, contentHandler.createContent);

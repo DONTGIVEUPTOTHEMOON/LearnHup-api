@@ -13,7 +13,7 @@ export interface IContentDTO {
   videoUrl: string;
   comment: string;
   rating: number;
-  thumbnaiUrl: string;
+  thumbnailUrl: string;
   creatorName: string;
   creatorUrl: string;
   postedBy: IUserDTO;

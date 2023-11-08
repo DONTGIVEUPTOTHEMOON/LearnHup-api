@@ -20,12 +20,12 @@ export interface ICreateUserDTO {
 }
 
 export const toUserDTO = (user: IUser): IUserDTO => {
-  const { id, name, registerAt, username } = user;
+  const { id, name, registeredAt, username } = user;
   const userDTO: IUserDTO = {
     id,
     name,
     username,
-    registeredAt: registerAt.toISOString()
+    registeredAt: registeredAt.toISOString()
   };
 
   return userDTO;

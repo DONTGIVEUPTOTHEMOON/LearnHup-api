@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,36 +8,30 @@ datasource db {
 }
 
 model User {
-  id         String      @id @default(uuid()) @db.Uuid
-  name       String
-  username   String      @unique
-  password   String
-  registerAt DateTime    @default(now())
-  Content    Content[]
-  Blacklist  Blacklist[]
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String    @db.VarChar(255)
+  username     String    @unique @db.VarChar(255)
+  password     String    @db.VarChar(255)
+  registeredAt DateTime  @default(now())
+  Content      Content[]
 }
 
 model Content {
-  id          Int      @id @default(autoincrement())
-  videoTitle  String
-  videoUrl    String
-  comment     String
-  rating      Int
-  thumbnaiUrl String
-  creatorName String
-  creatorUrl  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
-  User        User     @relation(fields: [ownerId], references: [id])
-  ownerId     String   @db.Uuid
+  id           Int      @id @default(autoincrement())
+  videoTitle   String   @db.VarChar(255)
+  videoUrl     String   @db.VarChar()
+  comment      String   @db.VarChar(250)
+  rating       Int
+  thumbnailUrl String   @db.VarChar()
+  creatorName  String   @db.VarChar(255)
+  creatorUrl   String   @db.VarChar()
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+  User         User     @relation(fields: [ownerId], references: [id])
+  ownerId      String   @db.Uuid
 }
 
-model Blacklist {
-  id        String   @id @default(uuid()) @db.Uuid // Unique session identifier, can be a UUID or any other unique string
-  ownerId   String   @db.Uuid
-  token     String   @unique // Unique token associated with this session, used for authentication
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  expiresAt DateTime // Timestamp indicating when the session/token expires
-  User      User     @relation(fields: [ownerId], references: [id])
+model BlackListToken {
+  token                  String @id @db.VarChar()
+  expire_epoch_timestamp BigInt @db.BigInt
 }
