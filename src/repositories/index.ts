@@ -6,7 +6,7 @@ export interface IUser {
   id: string;
   username: string;
   name: string;
-  registerAt: Date;
+  registeredAt: Date;
 }
 export interface IContent {
   id: number;
@@ -14,13 +14,12 @@ export interface IContent {
   videoUrl: string;
   comment: string;
   rating: number;
-  thumbnaiUrl: string;
+  thumbnailUrl: string;
   creatorName: string;
   creatorUrl: string;
   createdAt: Date;
   updatedAt: Date;
   User: IUser;
-  ownerId: string;
 }
 
 export interface ICreateContent {
@@ -30,12 +29,19 @@ export interface ICreateContent {
   comment: string;
   creatorName: string;
   creatorUrl: string;
-  thumbnaiUrl: string;
+  thumbnailUrl: string;
+}
+
+export interface IToken {
+  token: string;
+  expire_epoch_timestamp: bigint;
 }
 export interface IUserRepository {
   createUser(user: ICreateUserDTO): Promise<IUser>;
   findByUsername(username: string): Promise<User>;
   findById(id: string): Promise<IUser>;
+  addInvalidToken(token: IToken): Promise<IToken>;
+  getInvalidToken(token: string): Promise<IToken | null>;
 }
 
 export interface IContentRepository {

@@ -1,6 +1,7 @@
 import { PrismaClient, User } from "@prisma/client";
-import { IUser, IUserRepository } from ".";
+import { IToken, IUser, IUserRepository } from ".";
 import { ICreateUserDTO } from "../dto/user";
+import { DEFAULT_USER_SELECT } from "../const";
 
 export default class UserRepository implements IUserRepository {
   private prisma: PrismaClient;
@@ -10,12 +11,7 @@ export default class UserRepository implements IUserRepository {
   createUser(user: ICreateUserDTO): Promise<IUser> {
     return this.prisma.user.create({
       data: user,
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        registerAt: true
-      }
+      select: DEFAULT_USER_SELECT
     });
   }
 
@@ -27,13 +23,20 @@ export default class UserRepository implements IUserRepository {
 
   findById(id: string): Promise<IUser> {
     return this.prisma.user.findUniqueOrThrow({
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        registerAt: true
-      },
+      select: DEFAULT_USER_SELECT,
       where: { id }
+    });
+  }
+
+  addInvalidToken(token: IToken): Promise<IToken> {
+    return this.prisma.blackListToken.create({
+      data: token
+    });
+  }
+
+  getInvalidToken(token: string): Promise<IToken | null> {
+    return this.prisma.blackListToken.findUnique({
+      where: { token }
     });
   }
 }

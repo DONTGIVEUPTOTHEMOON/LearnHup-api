@@ -6,7 +6,7 @@ import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { sign } from "jsonwebtoken";
 import { JWT_SECRET } from "../const";
 
-export default class userHandler implements IUserHandler {
+export default class UserHandler implements IUserHandler {
   private repo: IUserRepository;
   constructor(repo: IUserRepository) {
     this.repo = repo;
@@ -74,7 +74,6 @@ export default class userHandler implements IUserHandler {
     }
   };
 
-  //login
   login: IUserHandler["login"] = async (req, res) => {
     const { username, password: plainPassword } = req.body;
     try {
@@ -107,21 +106,23 @@ export default class userHandler implements IUserHandler {
     }
   };
 
-  //logout
   logout: IUserHandler["logout"] = async (req, res) => {
-    const tokenToInvalidate = req.headers.authorization?.split(" ")[1];
-    // Check if the token exists
-    if (!tokenToInvalidate) {
-      return res.status(401).json({ message: "Unauthorized" }).end();
+    try {
+      const { token, expire } = res.locals.user;
+      const expireBigInt = BigInt(expire);
+      await this.repo.addInvalidToken({
+        token,
+        expire_epoch_timestamp: expireBigInt
+      });
+
+      return res.status(200).end();
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "internal server error" }).end();
     }
-
-    // TODO: Add the logic to invalidate the token (e.g., adding it to a blacklist)
-    // For example, you can store the invalidated tokens in a database or cache.
-
-    return res.status(200).json({ message: "Logged out successfully" }).end();
   };
 
-  getPeosonalInfo: IUserHandler["getPeosonalInfo"] = async (req, res) => {
+  getPersonalInfo: IUserHandler["getPersonalInfo"] = async (req, res) => {
     try {
       const id = res.locals.user.id;
 

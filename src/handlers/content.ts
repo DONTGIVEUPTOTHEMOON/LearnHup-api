@@ -36,7 +36,7 @@ export default class ContentHandler implements IContentHandler {
         rating,
         creatorName: author_name,
         creatorUrl: author_url,
-        thumbnaiUrl: thumbnail_url,
+        thumbnailUrl: thumbnail_url,
         videoTitle: title
       };
       const result = await this.repo.createContent(createContentData, id);
